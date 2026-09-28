@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#17202b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Capilla Quest — Plaza San Martín</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#111820;color:#fff;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none}
+body{display:flex;align-items:stretch;justify-content:center}
+#app{width:100%;height:100%;max-width:600px;position:relative;overflow:hidden;background:#17202b}
+.screen{position:absolute;inset:0;display:none;flex-direction:column}
+.screen.active{display:flex}
+.start{padding:24px 20px 18px;justify-content:center;text-align:center;background:linear-gradient(#16212b,#23313d)}
+.logo{font-size:clamp(28px,8vw,44px);font-weight:900;letter-spacing:-1px;color:#f4d27a;text-shadow:3px 3px 0 #573d32}
+.pixel{font-family:monospace}
+.start .card{background:#10171f;border:3px solid #344452;border-radius:18px;padding:20px;box-shadow:0 8px 0 #0a0f14}
+.start p{color:#cbd5dc;line-height:1.45;margin:10px 0 18px}
+.btn{border:0;border-radius:14px;background:#e4b85f;color:#211b12;font-weight:900;font-size:17px;padding:15px 18px;min-height:52px;box-shadow:0 5px 0 #8d6930;cursor:pointer}
+.btn:active{transform:translateY(4px);box-shadow:0 1px 0 #8d6930}
+.choice{display:flex;gap:10px;margin:15px 0}
+.choice button{flex:1;min-height:110px;border:3px solid #3a4a57;background:#18232d;color:#fff;border-radius:15px;font-size:15px;font-weight:800}
+.choice button.selected{border-color:#f4d27a;background:#273744}
+.avatar{font-size:44px;display:block;margin-bottom:5px}
+.hint{font-size:12px;color:#aebac2;margin-top:13px}
+#game{background:#18231b}
+.hud{position:absolute;z-index:5;top:0;left:0;right:0;padding:10px 10px 8px;background:linear-gradient(#101820e8,transparent);pointer-events:none}
+.hudrow{display:flex;align-items:center;gap:8px}
+.badge{background:#111a22e8;border:2px solid #44515b;border-radius:10px;padding:6px 9px;font-size:12px;font-weight:900}
+#objective{flex:1;min-width:0}
+#objectiveText{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#counter{color:#f4d27a}
+canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges;background:#101820}
+#game:after{content:"";position:absolute;inset:0;pointer-events:none;z-index:4;box-shadow:inset 0 0 70px #05090dcc}
+#objective{backdrop-filter:blur(3px)}
+.ctrl,.action button{touch-action:none}
+.controls{position:absolute;z-index:6;left:12px;right:12px;bottom:12px;display:flex;justify-content:space-between;align-items:end;pointer-events:none}
+.dpad{display:grid;grid-template-columns:48px 48px 48px;grid-template-rows:48px 48px 48px;gap:3px;pointer-events:auto}
+.ctrl{border:2px solid #d4dde3;background:#17222cdd;color:#fff;border-radius:12px;font-size:22px;font-weight:900;box-shadow:0 3px 0 #0b1015;user-select:none}
+.ctrl:active{background:#42505b;transform:translateY(2px);box-shadow:0 1px 0 #0b1015}
+.up{grid-column:2}.left{grid-column:1;grid-row:2}.down{grid-column:2;grid-row:3}.right{grid-column:3;grid-row:2}
+.action{pointer-events:auto;display:flex;flex-direction:column;gap:8px;align-items:end}
+.action button{min-width:128px}
+#interact{display:none;background:#f4d27a}
+#info{background:#2a3740;color:#fff;box-shadow:0 3px 0 #111}
+.overlay{position:absolute;z-index:10;inset:0;background:#071018e8;display:none;align-items:center;justify-content:center;padding:22px}
+.overlay.show{display:flex}
+.modal{width:min(100%,460px);background:#18232d;border:3px solid #50616d;border-radius:20px;padding:23px;text-align:center;box-shadow:0 10px 0 #090e12}
+.modal h1{color:#f4d27a;margin:0 0 8px;font-size:28px}
+.modal p{color:#d6dfe4;line-height:1.5}
+.success{font-size:52px}
+.small{font-size:12px;color:#9eacb5}
+</style>
+</head>
+<body>
+<main id="app">
+<section id="start" class="screen active start">
+  <div class="card">
+    <div class="pixel logo">CAPILLA QUEST</div>
+    <h2>🌳 La Plaza Cobra Vida</h2>
+    <p>Una pequeña aventura pixel-art inspirada en la Plaza San Martín de Capilla del Señor. Recorrela, activá la fuente, encendé las luces y terminá sentándote a contemplar el paisaje.</p>
+    <div class="choice">
+      <button id="boy" class="selected"><span class="avatar">🧑🏻</span>Hombre</button>
+      <button id="girl"><span class="avatar">👩🏻</span>Mujer</button>
+    </div>
+    <input id="name" maxlength="18" placeholder="Tu nombre" aria-label="Tu nombre" style="width:100%;padding:14px;border-radius:12px;border:2px solid #45545f;background:#0f161d;color:#fff;font-size:16px;text-align:center">
+    <button id="startBtn" class="btn" style="width:100%;margin-top:13px">COMENZAR MISIÓN</button>
+    <div class="hint">Diseñado para jugar desde teléfonos Android y iPhone.</div>
+  </div>
+</section>
+
+<section id="game" class="screen">
+  <div class="hud">
+    <div class="hudrow">
+      <div class="badge" id="playerBadge">EXPLORADOR</div>
+      <div class="badge" id="counter">0/3</div>
+    </div>
+    <div id="objective" class="badge" style="margin-top:6px"><span id="objectiveText">Buscá la fuente.</span></div>
+  </div>
+  <canvas id="world"></canvas>
+  <div class="controls">
+    <div class="dpad">
+      <button class="ctrl up" data-dir="up">▲</button>
+      <button class="ctrl left" data-dir="left">◀</button>
+      <button class="ctrl down" data-dir="down">▼</button>
+      <button class="ctrl right" data-dir="right">▶</button>
+    </div>
+    <div class="action">
+      <button id="interact" class="btn">INTERACTUAR</button>
+      <button id="info" class="btn">OBJETIVO</button>
+    </div>
+  </div>
+  <div id="overlay" class="overlay">
+    <div class="modal">
+      <div id="modalIcon" class="success">💧</div>
+      <h1 id="modalTitle">¡Listo!</h1>
+      <p id="modalText"></p>
+      <button id="modalBtn" class="btn">CONTINUAR</button>
+    </div>
+  </div>
+</section>
+</main>
+
+<script>
+(() => {
+"use strict";
+const canvas=document.getElementById("world"), ctx=canvas.getContext("2d");
+const start=document.getElementById("start"), game=document.getElementById("game");
+const nameInput=document.getElementById("name"), counter=document.getElementById("counter");
+const objectiveText=document.getElementById("objectiveText"), interact=document.getElementById("interact");
+const overlay=document.getElementById("overlay"), modalTitle=document.getElementById("modalTitle");
+const modalText=document.getElementById("modalText"), modalIcon=document.getElementById("modalIcon"), modalBtn=document.getElementById("modalBtn");
+let selected="Hombre", playerName="Explorador", audioCtx=null, ambientTimer=null;
+let state={
+  step:0, fountain:false, lights:false, inspected:false, discovered:false, seated:false, paused:false,
+  startedAt:0, particles:[], fireflies:[], toastTimer:null
+};
+let player={x:400,y:510,dir:"up"};
+const keys={up:false,down:false,left:false,right:false};
+const boy=document.getElementById("boy"), girl=document.getElementById("girl");
+boy.onclick=()=>{selected="Hombre";boy.classList.add("selected");girl.classList.remove("selected")};
+girl.onclick=()=>{selected="Mujer";girl.classList.add("selected");boy.classList.remove("selected")};
+
+function resize(){const d=Math.min(2,devicePixelRatio||1);canvas.width=Math.floor(innerWidth*d);canvas.height=Math.floor(innerHeight*d);ctx.setTransform(d,0,0,d,0,0)}
+addEventListener("resize",resize); resize();
+
+function tone(freq,dur,type="sine",gain=.025){
+  try{if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)(); const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(gain,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+dur);o.connect(g).connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+dur)}catch(e){}
+}
+function startAmbient(){
+  try{if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state==="suspended")audioCtx.resume()}catch(e){}
+  clearInterval(ambientTimer);
+  ambientTimer=setInterval(()=>{
+  if(state.paused)return;
+  // ambiente nocturno: pequeños grillos/sonidos lejanos generados con Web Audio
+  tone(180+Math.random()*80,.12,"sine",.008);
+  if(Math.random()<.55){
+    const base=1850+Math.random()*650;
+    tone(base,.045,"sine",.006);
+    setTimeout(()=>tone(base*1.12,.055,"sine",.005),65);
+    setTimeout(()=>tone(base*.94,.04,"sine",.004),135);
+  }
+  if(state.fountain && Math.random()<.35) tone(520+Math.random()*120,.07,"sine",.004);
+},2600);
+}
+function popup(icon,title,text,button="CONTINUAR"){
+  state.paused=true; modalIcon.textContent=icon;modalTitle.textContent=title;modalText.textContent=text;modalBtn.textContent=button;overlay.classList.add("show");
+}
+modalBtn.onclick=()=>{overlay.classList.remove("show");state.paused=false;if(state.step>=5)finish()};
+
+document.getElementById("startBtn").onclick=()=>{
+  playerName=(nameInput.value.trim()||"Explorador").slice(0,18);
+  start.classList.remove("active");game.classList.add("active");
+  document.getElementById("playerBadge").textContent=playerName.toUpperCase();
+  startAmbient();popup("🌙","LA PLAZA COBRA VIDA",
+    "Recorré la plaza de noche. Activá la fuente, encendé las luces, descubrí algunos rincones y terminá sentándote en cualquier banco.");
+};
+
+function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
+function worldSize(){return {w:Math.max(320,innerWidth),h:Math.max(520,innerHeight)}}
+function plazaLayout(){
+  const W=innerWidth,H=innerHeight,px=62,py=145,pw=W-124,ph=H-280;
+  return {W,H,px,py,pw,ph};
+}
+function getBenches(){
+  const {W,py,px,ph}=plazaLayout(), arr=[];
+  const top=[-125,-40,45,130], bottom=[-125,-40,45,130];
+  top.forEach(dx=>arr.push({x:W/2+dx,y:py-30,rot:0}));
+  bottom.forEach(dx=>arr.push({x:W/2+dx,y:py+ph+24,rot:0}));
+  [95,190,285,380,465].forEach(y=>arr.push({x:px-28,y:py+y,rot:Math.PI/2}));
+  [95,190,285,380,465].forEach(y=>arr.push({x:W-px-24,y:py+y,rot:-Math.PI/2}));
+  return arr;
+}
+function nearestBench(){
+  let best=null,bestD=Infinity;
+  getBenches().forEach((b,i)=>{const d=dist(player,b);if(d<bestD){bestD=d;best={...b,index:i+1,d}}});
+  return best;
+}
+function spawnParticles(x,y,count=10){
+  for(let i=0;i<count;i++) state.particles.push({x,y,vx:(Math.random()-.5)*1.8,vy:(Math.random()-.8)*1.8,life:30+Math.random()*35});
+}
+
+function draw(){
+  const W=innerWidth,H=innerHeight;
+  ctx.clearRect(0,0,W,H);
+  const {px,py,pw,ph}=plazaLayout();
+  // cielo nocturno y calles
+  const sky=ctx.createLinearGradient(0,0,0,H); sky.addColorStop(0,"#0b1524");sky.addColorStop(.48,"#162331");sky.addColorStop(1,"#10181d");
+  ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
+  // estrellas
+  for(let i=0;i<34;i++){
+    const x=(i*83+29)%W,y=18+(i*47)%95;
+    ctx.fillStyle=i%5===0?"#dceeff":"#8da8bc";ctx.fillRect(x,y,i%5===0?2:1,i%5===0?2:1);
+  }
+  // edificios perimetrales
+  building(5,25,118,68,"IGLESIA",true);
+  building(W-123,25,118,68,"CENTRO",false);
+  building(132,31,82,54,"CASA",false);
+  if(W>430) building(W-214,34,80,51,"CAFÉ",false);
+
+  // calles y veredas
+  ctx.fillStyle="#30383d";ctx.fillRect(0,92,W,45);ctx.fillRect(0,H-98,W,45);
+  ctx.fillStyle="#50585b";ctx.fillRect(0,101,W,3);ctx.fillRect(0,H-89,W,3);
+  ctx.fillStyle="#8e8170";ctx.fillRect(0,137,W,8);ctx.fillRect(0,H-145,W,8);
+  ctx.fillStyle="#3c4547";ctx.fillRect(10,137,43,H-282);ctx.fillRect(W-53,137,43,H-282);
+
+  // base de plaza
+  ctx.fillStyle="#426b42";ctx.fillRect(px,py,pw,ph);
+  ctx.fillStyle="#527d49";ctx.fillRect(px+8,py+8,pw-16,ph-16);
+  // césped pixelado
+  for(let i=0;i<120;i++){
+    const x=px+10+((i*71)%Math.max(20,pw-20)), y=py+10+((i*43)%Math.max(20,ph-20));
+    ctx.fillStyle=i%3===0?"#6c9657":i%3===1?"#456f43":"#789b5c";
+    ctx.fillRect(x,y,1+(i%2),1);
+  }
+
+  // caminos principales y secundarios
+  ctx.fillStyle="#aa9b7f";ctx.fillRect(W/2-24,py,pw?48:48,ph);ctx.fillRect(px,py+ph/2-22,pw,44);
+  ctx.fillStyle="#c1b293";ctx.fillRect(W/2-20,py,40,ph);ctx.fillRect(px,py+ph/2-18,pw,36);
+  for(let y=py+8;y<py+ph;y+=14){ctx.fillStyle="#9b8c72";ctx.fillRect(W/2-19,y,38,1)}
+  for(let x=px+8;x<px+pw;x+=15){ctx.fillStyle="#9b8c72";ctx.fillRect(x,py+ph/2-17,1,34)}
+  // caminos diagonales secundarios
+  ctx.strokeStyle="#8f826b";ctx.lineWidth=7;ctx.beginPath();ctx.moveTo(px+12,py+12);ctx.lineTo(W/2-27,py+ph/2-25);ctx.moveTo(W-px-12,py+12);ctx.lineTo(W/2+27,py+ph/2-25);ctx.stroke();
+
+  // canteros
+  gardenBed(px+25,py+25,95,34);gardenBed(W-px-120,py+25,95,34);
+  gardenBed(px+25,py+ph-59,95,34);gardenBed(W-px-120,py+ph-59,95,34);
+
+  // árboles, arbustos y faroles
+  const trees=[
+    [88,180,1.05],[W-88,180,1.12],[92,py+ph-38,1.15],[W-92,py+ph-38,.95],
+    [150,168,.8],[W-150,168,.9],[150,py+ph-22,.9],[W-150,py+ph-22,1.05],
+    [212,205,.72],[W-212,205,.75],[212,py+ph-62,.78],[W-212,py+ph-62,.7],
+    [112,py+ph/2, .72],[W-112,py+ph/2,.82]
+  ];
+  trees.forEach(t=>tree(t[0],t[1],t[2]));
+  [[118,230],[W-118,230],[118,py+ph-92],[W-118,py+ph-92],[285,py+44],[W-285,py+44]].forEach(t=>shrub(t[0],t[1]));
+  const lamps=[[175,py+92],[W-175,py+92],[175,py+ph-92],[W-175,py+ph-92],[px+72,py+ph/2-85],[W-px-72,py+ph/2-85],[px+72,py+ph/2+85],[W-px-72,py+ph/2+85]];
+  lamps.forEach(t=>lamp(t[0],t[1]));
+
+  // bancos: todos forman parte del perímetro
+  getBenches().forEach((b,i)=>bench(b.x,b.y,b.rot,i===nearestBench()?.index-1 && state.step===3));
+
+  monument(W/2,py+45);
+  fountain(W/2,py+ph/2);
+  lightBox(W-115,py+ph/2-12);
+  signpost(px+34,py+ph/2+20);
+  drawParticles();
+  drawFireflies();
+  drawPlayer(player.x,player.y);
+  requestAnimationFrame(draw);
+}
+function gardenBed(x,y,w,h){
+  ctx.fillStyle="#304d32";ctx.fillRect(x,y,w,h);
+  ctx.fillStyle="#6d9250";ctx.fillRect(x+3,y+3,w-6,h-6);
+  for(let i=0;i<9;i++){ctx.fillStyle=i%2?"#e3a5ad":"#e9c66f";ctx.fillRect(x+8+i*9,y+9+(i%3)*5,3,3)}
+}
+function tree(x,y,scale=1){
+  ctx.save();ctx.translate(x,y);ctx.scale(scale,scale);
+  ctx.fillStyle="#3a261e";ctx.fillRect(-5,8,10,27);ctx.fillStyle="#513323";ctx.fillRect(-3,2,6,30);
+  ctx.fillStyle="#244c31";ctx.fillRect(-22,-8,44,25);ctx.fillStyle="#2f6339";ctx.fillRect(-17,-18,34,28);
+  ctx.fillStyle="#3f7843";ctx.fillRect(-9,-26,25,25);ctx.fillStyle="#648e4d";ctx.fillRect(-2,-29,10,9);
+  ctx.fillStyle="#79a45a";ctx.fillRect(-17,-5,7,6);ctx.fillRect(8,-14,6,5);ctx.restore();
+}
+function shrub(x,y){
+  ctx.fillStyle="#345d39";ctx.fillRect(x-15,y+3,30,10);ctx.fillStyle="#4e7d43";ctx.fillRect(x-11,y-5,22,14);ctx.fillStyle="#769a50";ctx.fillRect(x-4,y-10,9,9);
+}
+function lamp(x,y){
+  ctx.fillStyle="#252b2d";ctx.fillRect(x-2,y,4,23);ctx.fillRect(x-7,y+20,14,4);ctx.fillRect(x-4,y-7,8,7);
+  if(state.lights){
+    const g=ctx.createRadialGradient(x,y-3,2,x,y-3,34);g.addColorStop(0,"#fff3b0aa");g.addColorStop(1,"#fff3b000");
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y-3,34,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle="#fff1a3";ctx.fillRect(x-4,y-7,8,5);ctx.fillStyle="#fffbe0";ctx.fillRect(x-2,y-6,4,3);
+  }else{ctx.fillStyle="#3b4140";ctx.fillRect(x-4,y-7,8,5)}
+}
+function bench(x,y,rot=0,highlight=false){
+  ctx.save();ctx.translate(x,y);ctx.rotate(rot);
+  ctx.fillStyle="#2b201a";ctx.fillRect(3,13,6,13);ctx.fillRect(43,13,6,13);
+  ctx.fillStyle="#593b28";ctx.fillRect(0,0,52,8);ctx.fillRect(3,10,46,7);
+  ctx.fillStyle="#8c633c";ctx.fillRect(4,2,44,2);ctx.fillRect(7,12,38,2);
+  if(highlight){ctx.strokeStyle="#f4d27a";ctx.lineWidth=2;ctx.strokeRect(-3,-4,58,24)}
+  ctx.restore();
+}
+function building(x,y,w,h,label,church=false){
+  ctx.fillStyle=church?"#cbbda4":"#9e8771";ctx.fillRect(x,y,w,h);
+  ctx.fillStyle=church?"#5f4b42":"#574840";ctx.fillRect(x+8,y+15,20,25);ctx.fillRect(x+w-28,y+15,20,25);
+  ctx.fillStyle="#d9c8a9";ctx.fillRect(x+11,y+18,14,18);ctx.fillRect(x+w-25,y+18,14,18);
+  if(church){ctx.fillStyle="#6d5144";ctx.fillRect(x+w/2-18,y-22,36,22);ctx.fillStyle="#88705d";ctx.fillRect(x+w/2-4,y-48,8,26);ctx.fillStyle="#bba985";ctx.beginPath();ctx.moveTo(x+w/2-9,y-48);ctx.lineTo(x+w/2,y-58);ctx.lineTo(x+w/2+9,y-48);ctx.fill()}
+  ctx.fillStyle="#463a32";ctx.font="8px monospace";ctx.fillText(label,x+7,y+10);
+}
+function monument(x,y){
+  ctx.fillStyle="#57514b";ctx.fillRect(x-12,y+35,24,7);ctx.fillStyle="#716a60";ctx.fillRect(x-7,y+2,14,34);
+  ctx.fillStyle="#928879";ctx.fillRect(x-4,y-10,8,14);ctx.fillStyle="#b1a692";ctx.fillRect(x-2,y-14,4,7);
+}
+function fountain(x,y){
+  ctx.fillStyle="#4e4b47";ctx.beginPath();ctx.arc(x,y,49,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle="#7c7469";ctx.beginPath();ctx.arc(x,y,43,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=state.fountain?"#3b9fc5":"#66635e";ctx.beginPath();ctx.arc(x,y,36,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle=state.fountain?"#a8eaff":"#898278";ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,29,0,Math.PI*2);ctx.stroke();
+  ctx.fillStyle="#5f5a54";ctx.fillRect(x-6,y-32,12,28);ctx.fillRect(x-17,y-6,34,7);
+  if(state.fountain){
+    const t=performance.now()/350;
+    for(let i=0;i<10;i++){let a=i*Math.PI/5+t*.3,rr=18+((i*7+t*10)%18);ctx.fillStyle="#baf4ff";ctx.fillRect(x+Math.cos(a)*rr-2,y+Math.sin(a)*rr-2,4,4)}
+    if(Math.random()<.08)spawnParticles(x+(Math.random()-.5)*30,y+(Math.random()-.5)*30,1);
+  }
+}
+function lightBox(x,y){
+  ctx.fillStyle="#2b3032";ctx.fillRect(x,y,38,54);ctx.fillStyle="#111719";ctx.fillRect(x+6,y+7,26,20);
+  ctx.fillStyle=state.lights?"#ffe58a":"#151b1e";ctx.fillRect(x+9,y+10,20,13);ctx.fillStyle="#a8a8a8";ctx.fillRect(x+8,y+34,22,4);
+  ctx.fillStyle="#555";ctx.fillRect(x+4,y+28,30,3);
+}
+function signpost(x,y){
+  ctx.fillStyle="#47352a";ctx.fillRect(x-2,y,4,24);ctx.fillStyle="#b49c72";ctx.fillRect(x-18,y-10,36,12);ctx.fillStyle="#3d3027";ctx.font="6px monospace";ctx.fillText("PLAZA",x-14,y-2);
+}
+function drawParticles(){
+  for(let i=state.particles.length-1;i>=0;i--){const p=state.particles[i];p.x+=p.vx;p.y+=p.vy;p.vy+=.025;p.life--;ctx.fillStyle="#b8efffaa";ctx.fillRect(p.x,p.y,2,2);if(p.life<=0)state.particles.splice(i,1)}
+}
+function drawFireflies(){
+  const {px,py,pw,ph}=plazaLayout();
+  for(let i=0;i<14;i++){const x=px+15+((i*137+Math.floor(performance.now()/900)*9)%Math.max(30,pw-30)),y=py+20+((i*83)%Math.max(30,ph-40));ctx.fillStyle=state.lights?"#f5e7a455":"#a9c47f22";ctx.fillRect(x,y,2,2)}
+}
+function drawPlayer(x,y){
+  ctx.fillStyle="#111";ctx.fillRect(x-11,y+17,22,5);
+  ctx.fillStyle=selected==="Mujer"?"#b85c7b":"#3e78bd";ctx.fillRect(x-8,y,16,20);
+  ctx.fillStyle="#e4b083";ctx.fillRect(x-7,y-11,14,12);
+  ctx.fillStyle="#3b241d";ctx.fillRect(x-8,y-14,16,6);
+  ctx.fillStyle="#222";ctx.fillRect(x-7,y+20,5,5);ctx.fillRect(x+2,y+20,5,5);
+}
+function near(x,y,r=60){return dist(player,{x,y})<r}
+function positions(){
+  const {W,py,ph,px,pw}=plazaLayout();
+  return {
+    f:{x:W/2,y:py+ph/2},
+    l:{x:W-96,y:py+ph/2+15},
+    m:{x:W/2,y:py+31},
+    s:{x:px+34,y:py+ph/2+20}
+  };
+}
+function updateObjective(){
+  const total=5;
+  counter.textContent=Math.min(state.step,total)+"/"+total;
+  const p=positions();
+  const nb=nearestBench();
+  if(state.step===0){objectiveText.textContent="💧 Buscá la fuente central.";interact.style.display=near(p.f.x,p.f.y,62)?"block":"none"}
+  else if(state.step===1){objectiveText.textContent="💡 Encontrá la caja de luces.";interact.style.display=near(p.l.x,p.l.y,62)?"block":"none"}
+  else if(state.step===2){objectiveText.textContent="🏛️ Visitá el monumento central y observá sus detalles.";interact.style.display=near(p.m.x,p.m.y,65)?"block":"none"}
+  else if(state.step===3){objectiveText.textContent="📍 Encontrá el cartel de la plaza.";interact.style.display=near(p.s.x,p.s.y,62)?"block":"none"}
+  else if(state.step===4){objectiveText.textContent="🪑 Sentate en CUALQUIER banco del perímetro.";interact.style.display=(nb&&nb.d<62)?"block":"none"}
+  else {objectiveText.textContent="✨ Misión cumplida.";interact.style.display="none"}
+}
+function interactNow(){
+  const p=positions(), nb=nearestBench();
+  if(state.step===0&&near(p.f.x,p.f.y,62)){
+    state.fountain=true;state.step=1;spawnParticles(p.f.x,p.f.y,16);tone(520,.25,"triangle",.06);
+    popup("💧","¡FUENTE ACTIVADA!","El agua vuelve a correr. La plaza empieza a cobrar vida. Ahora buscá la caja de iluminación.");
+  }else if(state.step===1&&near(p.l.x,p.l.y,62)){
+    state.lights=true;state.step=2;spawnParticles(p.l.x,p.l.y,12);tone(720,.3,"square",.05);
+    popup("💡","¡LUCES ENCENDIDAS!","Los faroles iluminan los caminos. Hay algunos detalles históricos para descubrir. Acercate al monumento central.");
+  }else if(state.step===2&&near(p.m.x,p.m.y,65)){
+    state.inspected=true;state.step=3;tone(610,.18,"sine",.04);setTimeout(()=>tone(760,.18,"sine",.03),130);
+    popup("🏛️","¡DESCUBRIMIENTO!","Encontraste el monumento de la plaza. Ahora recorré otro sector y buscá el pequeño cartel.");
+  }else if(state.step===3&&near(p.s.x,p.s.y,62)){
+    state.discovered=true;state.step=4;spawnParticles(p.s.x,p.s.y,8);tone(430,.2,"triangle",.04);
+    popup("📍","¡LUGAR DESCUBIERTO!","Ya conocés otro rincón de la plaza. Para terminar, acercate a cualquiera de los bancos del perímetro y sentate.");
+  }else if(state.step===4&&nb&&nb.d<62){
+    state.seated=true;state.step=5;tone(880,.2,"triangle",.06);setTimeout(()=>tone(1040,.3,"triangle",.05),180);
+    popup("🌟","MISIÓN CUMPLIDA","¡Excelente, "+playerName+"! Activaste la fuente, encendiste las luces, descubriste la plaza y te sentaste en el banco #"+nb.index+". La Plaza San Martín volvió a cobrar vida.","FINALIZAR");
+  }
+  updateObjective();
+}
+interact.onclick=interactNow;
+document.getElementById("info").onclick=()=>popup("📍","TU MISIÓN",
+ state.step===0?"Encontrá la fuente central y activala.":
+ state.step===1?"Buscá la caja de luces y encendé la iluminación.":
+ state.step===2?"Buscá un banco, sentate y contemplá la plaza.":
+ "Completaste las tres tareas. La aventura terminó.");
+
+function finish(){
+  overlay.classList.add("show");modalIcon.textContent="🏆";modalTitle.textContent="MISIÓN COMPLETADA";
+  modalText.textContent="Gracias por recorrer la Plaza San Martín. Podés cerrar esta experiencia y continuar tu recorrido por Capilla del Señor.";
+  modalBtn.textContent="FIN DEL JUEGO";modalBtn.disabled=true;modalBtn.style.opacity=".55";
+  interact.style.display="none";state.paused=true;
+}
+
+function move(dir){
+ if(state.paused)return;
+ const speed=3.2;
+ if(dir==="up"){player.y-=speed;player.dir="up"} if(dir==="down"){player.y+=speed;player.dir="down"}
+ if(dir==="left"){player.x-=speed;player.dir="left"} if(dir==="right"){player.x+=speed;player.dir="right"}
+ const W=innerWidth,H=innerHeight;player.x=Math.max(45,Math.min(W-45,player.x));player.y=Math.max(120,Math.min(H-120,player.y));
+ updateObjective();
+}
+document.querySelectorAll("[data-dir]").forEach(btn=>{
+ const d=btn.dataset.dir;
+ const down=e=>{e.preventDefault();keys[d]=true};
+ const up=e=>{e.preventDefault();keys[d]=false};
+ btn.addEventListener("touchstart",down,{passive:false});btn.addEventListener("touchend",up,{passive:false});btn.addEventListener("touchcancel",up,{passive:false});
+ btn.addEventListener("mousedown",down);btn.addEventListener("mouseup",up);btn.addEventListener("mouseleave",up);
+});
+setInterval(()=>{if(!state.paused){if(keys.up)move("up");if(keys.down)move("down");if(keys.left)move("left");if(keys.right)move("right")}},16);
+addEventListener("keydown",e=>{const m={ArrowUp:"up",ArrowDown:"down",ArrowLeft:"left",ArrowRight:"right"}[e.key];if(m){e.preventDefault();keys[m]=true}});
+addEventListener("keyup",e=>{const m={ArrowUp:"up",ArrowDown:"down",ArrowLeft:"left",ArrowRight:"right"}[e.key];if(m)keys[m]=false});
+updateObjective();draw();
+})();
+</script>
+</body>
+</html>
